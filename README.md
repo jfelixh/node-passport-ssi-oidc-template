@@ -1,60 +1,69 @@
-# Okta Node Passport OIDC Example
+# Node Passport OIDC Example for SSI-to-OIDC Bridge
 
-In this tutorial, you'll learn to use Okta with the generic `passport-openidconnect` package to build secure Node authentication and user management.
+> [!NOTE]
+> This repository is based on a fork from [okta-node-passport-oidc-example](https://github.com/oktadev/okta-node-passport-oidc-example).
 
-Please read [Build Secure Node Authentication with Passport.js and OpenID Connect](https://developer.okta.com/blog/2018/05/18/node-authentication-with-passport-and-oidc) to walk through the tutorial.
+This code can be used as an example or template for an application using the [SSI-to-OIDC Bridge](https://github.com/GAIA-X4PLC-AAD/ssi-to-oidc-bridge) as an OIDC provider for logins. While the bridge should work with any OIDC client, setup and configuration can be troublesome. This repository is intended to provide a minimal working example.
 
 **Prerequisites**
 
 - Basic knowledge of JavaScript
-- [Node.js](https://nodejs.org/en/)
-- [Okta CLI](https://cli.okta.com/)
+- [Node.js](https://nodejs.org/en/) installed
+- [SSI-to-OIDC Bridge](https://github.com/GAIA-X4PLC-AAD/ssi-to-oidc-bridge) deployed locally or remotely
 
-> [Okta](https://developer.okta.com/) has Authentication and User Management APIs that reduce development time with instant-on, scalable user infrastructure. Okta's intuitive API and expert support make it easy for developers to authenticate, manage and secure users and roles in any application.
 
-## Getting Started
+## Getting Started with a Local Setup
 
 To install this example application, run the following commands:
-```
-git clone https://github.com/oktadev/okta-node-passport-oidc-example.git
-cd okta-node-passport-oidc-example
-```
-
-### Create an OIDC Application in Okta
-
-Create a free developer account with the following command using the [Okta CLI](https://cli.okta.com):
 
 ```shell
-okta register
+git clone https://github.com/jfelixh/node-passport-ssi-oidc-template.git
+cd node-passport-ssi-oidc-template
 ```
 
-If you already have a developer account, use `okta login` to integrate it with the Okta CLI.
+Alternatively, create your own repository based on this one using the template functionality.
 
-Provide the required information. Once you register, create a client application in Okta with the following command:
+### Register an OIDC Client at the SSI-to-OIDC Bridge
+
+Assuming you run the bridge in the provider `docker compose` configuration locally, you can run the following to register a new client. You need to replace the curly bracket placeholders with suitable values:
 
 ```shell
-okta apps create
+docker run --rm -it \
+    --network ory-hydra-net \
+    oryd/hydra:v2.2.0 \
+    create client \
+    --skip-tls-verify \
+    --name {ANY NAME} \
+    --secret {A SECURE CLIENT SECRET STRING} \
+    --redirect-uri http://localhost:3000/authorization-code/callback \
+    --token-endpoint-auth-method client_secret_post \
+    -e http://hydra:4445 \
+    --format json
 ```
 
-You will be prompted to select the following options:
-- Type of Application: **1: Web**
-- Redirect URI: `https://localhost:3000/authorization-code/callback`
-- Logout Redirect URI: `https://localhost:3000/`
+The returned JSON contains a `client_id` that you will need in the next step.
 
-Run `cat .okta.env` (or `.okta.env` on Windows) to see the issuer and credentials for your app. Update `app.js` with your Okta settings.
+Fill in the placeholder values in `app.js`:
 
+```js
+// set up passport
+Issuer.discover("{SSI-to-OIDC BRIDGE BASE URL}").then((bridgeIssuer) => {
+  const client = new bridgeIssuer.Client({
+    client_id: "{client_id}",
+    client_secret: "{CLIENT SECRET STRING}",
+    redirect_uris: ["http://localhost:3000/authorization-code/callback"],
+    token_endpoint_auth_method: "client_secret_post",
+  });
+```
 
-### Install dependencies and run the app
+### Install Dependencies and Run the App
 
 To install the dependencies and start the app, run the following commands:
-```
+
+```shell
 npm install
 npm start
 ```
-
-## Help
-
-Please post any questions as comments on the [blog post][https://developer.okta.com/blog/2018/05/18/node-authentication-with-passport-and-oidc], or visit our [Okta Developer Forums](https://devforum.okta.com/).
 
 ## License
 

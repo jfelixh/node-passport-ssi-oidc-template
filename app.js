@@ -35,10 +35,10 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // set up passport
-Issuer.discover("http://localhost:5004").then((bridgeIssuer) => {
+Issuer.discover("{SSI-to-OIDC BRIDGE BASE URL}").then((bridgeIssuer) => {
   const client = new bridgeIssuer.Client({
-    client_id: "109c8503-6b5e-4b90-a32e-4244165095a3",
-    client_secret: "some-secret",
+    client_id: "{client_id}",
+    client_secret: "{CLIENT SECRET STRING}",
     redirect_uris: ["http://localhost:3000/authorization-code/callback"],
     token_endpoint_auth_method: "client_secret_post",
   });
